@@ -4,10 +4,6 @@ import * as Dither from 'canvas-dither';
 import * as Flatten from 'canvas-flatten';
 import * as QRCode from 'qrcode';
 
-declare module 'iconv-lite' {
-    export const encodings: Array<string>;
-}
-
 interface PrinterParam {
   width: number;
   singleCharLength: number;
@@ -54,7 +50,7 @@ export default class EscPosEncoder {
      * Create a new EscPosEncoder
      *
      */
-     constructor() {
+    constructor() {
       this._reset();
     }
 
@@ -407,34 +403,24 @@ export default class EscPosEncoder {
         // 'windows1258': [0x5e, false],
       };
 
-      let codepage;
+      if (!iconv.encodingExists(value)) {
+        throw new Error('Unknown codepage');
+      }
 
-        if (!iconv.encodingExists(value)) {
-          throw new Error('Unknown codepage');
+      const codepage = value;
+
+      if (typeof codepages[codepage] !== 'undefined') {
+        this._codepage = codepage;
+        this._state.hanzi = codepages[codepage][1];
+
+        // 大部分打印机的codepage顺序表都是不一样的, 只有比较确定的这里开启自动设置, 不太确定的这里跳过设置, 要让用户自己用工具设置打印机
+        if (codepages[codepage][0]!==null) {
+          this._queue([
+            0x1b, 0x74, codepages[codepage][0],
+          ]);
         }
-  
-        if (value in iconv.encodings) {
-          if (typeof iconv.encodings[value] === 'string') {
-            codepage = iconv.encodings[value];
-          } else {
-            codepage = value;
-          }
-        } else {
-          throw new Error('Unknown codepage');
-        }
-  
-        if (typeof codepages[codepage] !== 'undefined') {
-          this._codepage = codepage;
-          this._state.hanzi = codepages[codepage][1];
-  
-          // 大部分打印机的codepage顺序表都是不一样的, 只有比较确定的这里开启自动设置, 不太确定的这里跳过设置, 要让用户自己用工具设置打印机
-          if(codepages[codepage][0]!==null) {
-            this._queue([
-              0x1b, 0x74, codepages[codepage][0],
-            ]);
-          }
-        } else {
-          throw new Error('Codepage not supported by printer');
+      } else {
+        throw new Error('Codepage not supported by printer');
       }
 
       return this;

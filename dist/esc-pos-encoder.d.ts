@@ -1,6 +1,3 @@
-declare module 'iconv-lite' {
-    const encodings: Array<string>;
-}
 export declare enum PrinterWidthEnum {
     '_58' = 58,
     '_80' = 80
