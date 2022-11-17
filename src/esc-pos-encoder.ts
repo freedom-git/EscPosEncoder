@@ -54,7 +54,7 @@ export default class EscPosEncoder {
      * Create a new EscPosEncoder
      *
      */
-    constructor() {
+     constructor() {
       this._reset();
     }
 
@@ -370,66 +370,71 @@ export default class EscPosEncoder {
      */
     codepage(value: string): EscPosEncoder {
       const codepages = {
-        'cp437': [0x00, false],
-        'cp737': [0x40, false],
+        'utf-8': [null, false],
         'cp850': [0x02, false],
-        'cp775': [0x5f, false],
-        'cp852': [0x12, false],
-        'cp855': [0x3c, false],
-        'cp857': [0x3d, false],
-        'cp858': [0x13, false],
-        'cp860': [0x03, false],
-        'cp861': [0x38, false],
-        'cp862': [0x3e, false],
-        'cp863': [0x04, false],
-        'cp864': [0x1c, false],
-        'cp865': [0x05, false],
-        'cp866': [0x11, false],
-        'cp869': [0x42, false],
-        'cp936': [0xff, true],
-        'cp949': [0xfd, true],
-        'cp950': [0xfe, true],
-        'cp1252': [0x10, false],
-        'iso88596': [0x16, false],
-        'shiftjis': [0xfc, true],
-        'windows874': [0x1e, false],
-        'windows1250': [0x48, false],
-        'windows1251': [0x49, false],
-        'windows1252': [0x47, false],
-        'windows1253': [0x5a, false],
-        'windows1254': [0x5b, false],
-        'windows1255': [0x20, false],
-        'windows1256': [0x5c, false],
-        'windows1257': [0x19, false],
-        'windows1258': [0x5e, false],
-        'tcvn': [0x1c, false], // 芯烨打印机的越南语
+        'cp949': [null, true],
+        'cp936': [null, true],
+        'cp1258': [null, false],
+        // 'cp437': [0x00, false],
+        // 'cp737': [0x40, false],
+        // 'cp775': [0x5f, false],
+        // 'cp852': [0x12, false],
+        // 'cp855': [0x3c, false],
+        // 'cp857': [0x3d, false],
+        // 'cp858': [0x13, false],
+        // 'cp860': [0x03, false],
+        // 'cp861': [0x38, false],
+        // 'cp862': [0x3e, false],
+        // 'cp863': [0x04, false],
+        // 'cp864': [0x1c, false],
+        // 'cp865': [0x05, false],
+        // 'cp866': [0x11, false],
+        // 'cp869': [0x42, false],
+        // 'cp949': [0xfd, true],
+        // 'cp950': [0xfe, true],
+        // 'cp1252': [0x10, false],
+        // 'iso88596': [0x16, false],
+        // 'shiftjis': [0xfc, true],
+        // 'windows874': [0x1e, false],
+        // 'windows1250': [0x48, false],
+        // 'windows1251': [0x49, false],
+        // 'windows1252': [0x47, false],
+        // 'windows1253': [0x5a, false],
+        // 'windows1254': [0x5b, false],
+        // 'windows1255': [0x20, false],
+        // 'windows1256': [0x5c, false],
+        // 'windows1257': [0x19, false],
+        // 'windows1258': [0x5e, false],
       };
 
       let codepage;
 
-      if (!iconv.encodingExists(value)) {
-        throw new Error('Unknown codepage');
-      }
-
-      if (value in iconv.encodings) {
-        if (typeof iconv.encodings[value] === 'string') {
-          codepage = iconv.encodings[value];
-        } else {
-          codepage = value;
+        if (!iconv.encodingExists(value)) {
+          throw new Error('Unknown codepage');
         }
-      } else {
-        throw new Error('Unknown codepage');
-      }
-
-      if (typeof codepages[codepage] !== 'undefined') {
-        this._codepage = codepage;
-        this._state.hanzi = codepages[codepage][1];
-
-        this._queue([
-          0x1b, 0x74, codepages[codepage][0],
-        ]);
-      } else {
-        throw new Error('Codepage not supported by printer');
+  
+        if (value in iconv.encodings) {
+          if (typeof iconv.encodings[value] === 'string') {
+            codepage = iconv.encodings[value];
+          } else {
+            codepage = value;
+          }
+        } else {
+          throw new Error('Unknown codepage');
+        }
+  
+        if (typeof codepages[codepage] !== 'undefined') {
+          this._codepage = codepage;
+          this._state.hanzi = codepages[codepage][1];
+  
+          // 大部分打印机的codepage顺序表都是不一样的, 只有比较确定的这里开启自动设置, 不太确定的这里跳过设置, 要让用户自己用工具设置打印机
+          if(codepages[codepage][0]!==null) {
+            this._queue([
+              0x1b, 0x74, codepages[codepage][0],
+            ]);
+          }
+        } else {
+          throw new Error('Codepage not supported by printer');
       }
 
       return this;
