@@ -142,6 +142,12 @@ export default class EscPosImgEncoder extends EscPosEncoder {
    *
    */
   line(value: string, wrap?: number): EscPosEncoder {
+    if(value.includes('\n')) {
+      value.split('\n').forEach((item)=>{
+        this.line(item);
+      })
+      return this;
+    }
     const fixedWidthStrArr = this.splitByWidth(
       value,
       this.CVS.width
@@ -190,10 +196,48 @@ export default class EscPosImgEncoder extends EscPosEncoder {
   private _fillText(text,x,y){
     if(this._size === 1) {
       this.ctx.transform(.5, 0, 0, 1, 0, 0);
-      this.ctx.fillText(text, x*2, y);
+      this.ctx.fillText(this._handleDerection(text), x*2, y);
       this.ctx.transform(2, 0, 0, 1, 0, 0);
     }else {
-      this.ctx.fillText(text, x, y);
+      this.ctx.fillText(this._handleDerection(text), x, y);
+    }
+  }
+
+    /**
+   * handle text direction for ltr and rtl mix print
+   *
+   * @param  {string}   text  Text that needs to be printed
+   * @returns {string}          return fixed string
+   *
+   */
+  private _handleDerection(text) {
+    const direction = this._getTextDirection(text)
+    const bidiChar = direction === "rtl" ? "\u202B" : "\u202A";
+    const bidiText = bidiChar + text;
+    return bidiText
+  }
+
+  private _getTextDirection(text) {
+    const ltrChars = /[\u0000-\u05FF\u2000-\u206F]/; // LTR character range
+    const rtlChars = /[\u0590-\u07FF\uFB1D-\uFDFF\uFE70-\uFEFC]/; // RTL character range
+  
+    let rtlCount = 0;
+    let ltrCount = 0;
+  
+    // iterate over each character in the string
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (rtlChars.test(char)) {
+        rtlCount++;
+      } else if (ltrChars.test(char)) {
+        ltrCount++;
+      }
+    }
+  
+    if (rtlCount > ltrCount) {
+      return "rtl";
+    } else {
+      return "ltr";
     }
   }
 
@@ -343,11 +387,22 @@ export default class EscPosImgEncoder extends EscPosEncoder {
    *
    */
   oneLine(str1: string, str2: string): EscPosEncoder {
+    let multiToMulti = false;
+    if(str1.includes('\n')) {
+      if(str2.includes('\n')) {
+        multiToMulti = true;
+      } else {
+        str1.split('\n').forEach((item, index)=>{
+          this.oneLine(item, index===0?str2:'');
+        })
+        return this;
+      }
+    }
     this.align(AlignEnum.left)
     this.newline();
     const width1 = this.getStrWidth(str1);
     const width2 = this.getStrWidth(str2);
-    if(this.CVS.width-width1-width2<0) {
+    if(this.CVS.width-width1-width2<0 || multiToMulti) {
       this.line(str1)
       this.line(str2)
     }else {
@@ -402,22 +457,29 @@ export default class EscPosImgEncoder extends EscPosEncoder {
         this.line(dish.name);
         this.oneLine('', getCountAndPriceStr(dish.count, dish.price));
       } else {
-        const fixedWidthStrArr = this.splitByWidth(
-          dish.name,
-          this.CVS.width - countAndPriceLength - this.getStrWidth('  ')
-        );
-        fixedWidthStrArr.forEach((str, index) => {
-          if (index === 0) {
-            this.oneLine(str, getCountAndPriceStr(dish.count, dish.price));
-          } else {
-            this.line(str);
-          }
-        });
+        const nameArr = dish.name.split('\n');
+        for(let i=0; i<nameArr.length; i++) {
+          const name = nameArr[i];
+          const fixedWidthStrArr = this.splitByWidth(
+            name,
+            this.CVS.width - countAndPriceLength - this.getStrWidth('  ')
+          );
+          fixedWidthStrArr.forEach((str, index) => {
+            if (i===0 && index === 0) {
+              this.oneLine(str, getCountAndPriceStr(dish.count, dish.price));
+            } else {
+              this.line(str);
+            }
+          });
+        }
       }
       if (specificationInNewLine) {
         dish.specifications?.forEach((str, index) => {
           if (str) {
-            this.line('    ※ '+str+' ※');
+            const strArr = str.split('\n')
+            strArr.forEach((specString)=>{
+              this.line('  ※ '+specString+' ※  ');
+            })
           }
         });
       }

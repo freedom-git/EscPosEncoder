@@ -186,6 +186,12 @@ var EscPosImgEncoder = /** @class */ (function (_super) {
      */
     EscPosImgEncoder.prototype.line = function (value, wrap) {
         var _this = this;
+        if (value.includes('\n')) {
+            value.split('\n').forEach(function (item) {
+                _this.line(item);
+            });
+            return this;
+        }
         var fixedWidthStrArr = this.splitByWidth(value, this.CVS.width);
         fixedWidthStrArr.forEach(function (str) {
             _this.newline();
@@ -229,11 +235,46 @@ var EscPosImgEncoder = /** @class */ (function (_super) {
     EscPosImgEncoder.prototype._fillText = function (text, x, y) {
         if (this._size === 1) {
             this.ctx.transform(.5, 0, 0, 1, 0, 0);
-            this.ctx.fillText(text, x * 2, y);
+            this.ctx.fillText(this._handleDerection(text), x * 2, y);
             this.ctx.transform(2, 0, 0, 1, 0, 0);
         }
         else {
-            this.ctx.fillText(text, x, y);
+            this.ctx.fillText(this._handleDerection(text), x, y);
+        }
+    };
+    /**
+   * handle text direction for ltr and rtl mix print
+   *
+   * @param  {string}   text  Text that needs to be printed
+   * @returns {string}          return fixed string
+   *
+   */
+    EscPosImgEncoder.prototype._handleDerection = function (text) {
+        var direction = this._getTextDirection(text);
+        var bidiChar = direction === "rtl" ? "\u202B" : "\u202A";
+        var bidiText = bidiChar + text;
+        return bidiText;
+    };
+    EscPosImgEncoder.prototype._getTextDirection = function (text) {
+        var ltrChars = /[\u0000-\u05FF\u2000-\u206F]/; // LTR character range
+        var rtlChars = /[\u0590-\u07FF\uFB1D-\uFDFF\uFE70-\uFEFC]/; // RTL character range
+        var rtlCount = 0;
+        var ltrCount = 0;
+        // iterate over each character in the string
+        for (var i = 0; i < text.length; i++) {
+            var char = text[i];
+            if (rtlChars.test(char)) {
+                rtlCount++;
+            }
+            else if (ltrChars.test(char)) {
+                ltrCount++;
+            }
+        }
+        if (rtlCount > ltrCount) {
+            return "rtl";
+        }
+        else {
+            return "ltr";
         }
     };
     /**
@@ -379,11 +420,24 @@ var EscPosImgEncoder = /** @class */ (function (_super) {
      *
      */
     EscPosImgEncoder.prototype.oneLine = function (str1, str2) {
+        var _this = this;
+        var multiToMulti = false;
+        if (str1.includes('\n')) {
+            if (str2.includes('\n')) {
+                multiToMulti = true;
+            }
+            else {
+                str1.split('\n').forEach(function (item, index) {
+                    _this.oneLine(item, index === 0 ? str2 : '');
+                });
+                return this;
+            }
+        }
         this.align(AlignEnum.left);
         this.newline();
         var width1 = this.getStrWidth(str1);
         var width2 = this.getStrWidth(str2);
-        if (this.CVS.width - width1 - width2 < 0) {
+        if (this.CVS.width - width1 - width2 < 0 || multiToMulti) {
             this.line(str1);
             this.line(str2);
         }
@@ -434,20 +488,30 @@ var EscPosImgEncoder = /** @class */ (function (_super) {
                 _this.oneLine('', getCountAndPriceStr(dish.count, dish.price));
             }
             else {
-                var fixedWidthStrArr = _this.splitByWidth(dish.name, _this.CVS.width - countAndPriceLength - _this.getStrWidth('  '));
-                fixedWidthStrArr.forEach(function (str, index) {
-                    if (index === 0) {
-                        _this.oneLine(str, getCountAndPriceStr(dish.count, dish.price));
-                    }
-                    else {
-                        _this.line(str);
-                    }
-                });
+                var nameArr = dish.name.split('\n');
+                var _loop_1 = function (i) {
+                    var name_1 = nameArr[i];
+                    var fixedWidthStrArr = _this.splitByWidth(name_1, _this.CVS.width - countAndPriceLength - _this.getStrWidth('  '));
+                    fixedWidthStrArr.forEach(function (str, index) {
+                        if (i === 0 && index === 0) {
+                            _this.oneLine(str, getCountAndPriceStr(dish.count, dish.price));
+                        }
+                        else {
+                            _this.line(str);
+                        }
+                    });
+                };
+                for (var i = 0; i < nameArr.length; i++) {
+                    _loop_1(i);
+                }
             }
             if (specificationInNewLine) {
                 (_a = dish.specifications) === null || _a === void 0 ? void 0 : _a.forEach(function (str, index) {
                     if (str) {
-                        _this.line('    ※ ' + str + ' ※');
+                        var strArr = str.split('\n');
+                        strArr.forEach(function (specString) {
+                            _this.line('  ※ ' + specString + ' ※  ');
+                        });
                     }
                 });
             }

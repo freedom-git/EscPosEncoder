@@ -95,6 +95,15 @@ export default class EscPosImgEncoder extends EscPosEncoder {
    */
     private _fillText;
     /**
+   * handle text direction for ltr and rtl mix print
+   *
+   * @param  {string}   text  Text that needs to be printed
+   * @returns {string}          return fixed string
+   *
+   */
+    private _handleDerection;
+    private _getTextDirection;
+    /**
      * Print a newline
      *
      * @returns {EscPosEncoder}          Return the EscPosEncoder, for easy chaining commands

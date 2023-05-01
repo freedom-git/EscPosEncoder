@@ -273,20 +273,30 @@ var EscPosEncoder = /** @class */ (function () {
                 _this.oneLine('', getCountAndPriceStr(dish.count, dish.price));
             }
             else {
-                var fixedWidthStrArr = _this.splitByWidth(dish.name, _this.singleCharLengthPerLine - countAndPriceLength - 2);
-                fixedWidthStrArr.forEach(function (str, index) {
-                    if (index === 0) {
-                        _this.oneLine(str, getCountAndPriceStr(dish.count, dish.price));
-                    }
-                    else {
-                        _this.line(str);
-                    }
-                });
+                var nameArr = dish.name.split('\n');
+                var _loop_1 = function (i) {
+                    var name_1 = nameArr[i];
+                    var fixedWidthStrArr = _this.splitByWidth(name_1, _this.singleCharLengthPerLine - countAndPriceLength - 2);
+                    fixedWidthStrArr.forEach(function (str, index) {
+                        if (i === 0 && index === 0) {
+                            _this.oneLine(str, getCountAndPriceStr(dish.count, dish.price));
+                        }
+                        else {
+                            _this.line(str);
+                        }
+                    });
+                };
+                for (var i = 0; i < nameArr.length; i++) {
+                    _loop_1(i);
+                }
             }
             if (specificationInNewLine) {
                 (_a = dish.specifications) === null || _a === void 0 ? void 0 : _a.forEach(function (str, index) {
                     if (str) {
-                        _this.line('  * ' + str + ' *');
+                        var strArr = str.split('\n');
+                        strArr.forEach(function (specString) {
+                            _this.line('  * ' + str + ' *');
+                        });
                     }
                 });
             }
@@ -450,6 +460,13 @@ var EscPosEncoder = /** @class */ (function () {
      *
      */
     EscPosEncoder.prototype.line = function (value, wrap) {
+        var _this = this;
+        if (value.includes('\n')) {
+            value.split('\n').forEach(function (item) {
+                _this.line(item);
+            });
+            return this;
+        }
         this.text(value, wrap);
         this.newline();
         return this;
@@ -463,14 +480,27 @@ var EscPosEncoder = /** @class */ (function () {
      *
      */
     EscPosEncoder.prototype.oneLine = function (str1, str2) {
+        var _this = this;
+        var multiToMulti = false;
+        if (str1.includes('\n')) {
+            if (str2.includes('\n')) {
+                multiToMulti = true;
+            }
+            else {
+                str1.split('\n').forEach(function (item, index) {
+                    _this.oneLine(item, index === 0 ? str2 : '');
+                });
+                return this;
+            }
+        }
         this.align('left');
         var spaceNum = this.singleCharLengthPerLine - this.getStrWidth(str1) - this.getStrWidth(str2);
-        if (spaceNum >= 0) {
-            this.line(str1 + ' '.repeat(spaceNum) + str2);
-        }
-        else {
+        if (spaceNum < 0 || multiToMulti) {
             this.line(str1);
             this.line(str2);
+        }
+        else {
+            this.line(str1 + ' '.repeat(spaceNum) + str2);
         }
         return this;
     };

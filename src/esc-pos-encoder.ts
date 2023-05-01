@@ -253,22 +253,29 @@ export default class EscPosEncoder {
           this.line(dish.name);
           this.oneLine('', getCountAndPriceStr(dish.count, dish.price));
         } else {
-          const fixedWidthStrArr = this.splitByWidth(
-              dish.name,
-              this.singleCharLengthPerLine-countAndPriceLength-2
-          );
-          fixedWidthStrArr.forEach((str, index) => {
-            if (index === 0) {
-              this.oneLine(str, getCountAndPriceStr(dish.count, dish.price));
-            } else {
-              this.line(str);
-            }
-          });
+          const nameArr = dish.name.split('\n');
+          for (let i=0; i<nameArr.length; i++) {
+            const name = nameArr[i];
+            const fixedWidthStrArr = this.splitByWidth(
+                name,
+                this.singleCharLengthPerLine-countAndPriceLength-2
+            );
+            fixedWidthStrArr.forEach((str, index) => {
+              if (i===0 && index === 0) {
+                this.oneLine(str, getCountAndPriceStr(dish.count, dish.price));
+              } else {
+                this.line(str);
+              }
+            });
+          }
         }
         if (specificationInNewLine) {
           dish.specifications?.forEach((str, index) => {
             if (str) {
-              this.line('  * '+str+' *');
+              const strArr = str.split('\n');
+              strArr.forEach((specString)=>{
+                this.line('  * '+str+' *');
+              });
             }
           });
         }
@@ -478,6 +485,12 @@ export default class EscPosEncoder {
      *
      */
     line(value: string, wrap?: number): EscPosEncoder {
+      if (value.includes('\n')) {
+        value.split('\n').forEach((item)=>{
+          this.line(item);
+        });
+        return this;
+      }
       this.text(value, wrap);
       this.newline();
 
@@ -493,13 +506,24 @@ export default class EscPosEncoder {
      *
      */
     oneLine(str1: string, str2: string): EscPosEncoder {
+      let multiToMulti = false;
+      if (str1.includes('\n')) {
+        if (str2.includes('\n')) {
+          multiToMulti = true;
+        } else {
+          str1.split('\n').forEach((item, index)=>{
+            this.oneLine(item, index===0?str2:'');
+          });
+          return this;
+        }
+      }
       this.align('left');
       const spaceNum = this.singleCharLengthPerLine - this.getStrWidth(str1) - this.getStrWidth(str2);
-      if (spaceNum>=0) {
-        this.line(str1 + ' '.repeat(spaceNum) + str2);
-      } else {
+      if (spaceNum<0 || multiToMulti) {
         this.line(str1);
         this.line(str2);
+      } else {
+        this.line(str1 + ' '.repeat(spaceNum) + str2);
       }
       return this;
     }
