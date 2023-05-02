@@ -326,22 +326,29 @@ export default class EscPosEncoder {
         if (countFront) {
           this.line((dish.count>1?`${dish.count}x  `:'')+dish.name);
         } else {
-          const fixedWidthStrArr = this.splitByWidth(
-              dish.name,
-              this.singleCharLengthPerLine-countAndPriceLength
-          );
-          fixedWidthStrArr.forEach((str, index) => {
-            if (index === 0) {
-              this.oneLine(str, `x${dish.count}`);
-            } else {
-              this.line(str);
-            }
-          });
+          const nameArr = dish.name.split('\n');
+          for (let i=0; i<nameArr.length; i++) {
+            const name = nameArr[i];
+            const fixedWidthStrArr = this.splitByWidth(
+                name,
+                this.singleCharLengthPerLine-countAndPriceLength
+            );
+            fixedWidthStrArr.forEach((str, index) => {
+              if (i===0 && index === 0) {
+                this.oneLine(str, `x${dish.count}`);
+              } else {
+                this.line(str);
+              }
+            });
+          }
         }
         if (specificationInNewLine) {
           dish.specifications?.forEach((str, index) => {
             if (str) {
-              this.line('  * '+str+' *');
+              const strArr = str.split('\n');
+              strArr.forEach((specString)=>{
+                this.line('  * '+specString+' *');
+              });
             }
           });
         }

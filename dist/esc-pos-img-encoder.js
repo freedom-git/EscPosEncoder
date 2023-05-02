@@ -558,23 +558,33 @@ var EscPosImgEncoder = /** @class */ (function (_super) {
                 _this.line((dish.count > 1 ? dish.count + "x    " : '') + dish.name);
             }
             else {
-                var fixedWidthStrArr = _this.splitByWidth(dish.name, _this.CVS.width - countAndPriceLength);
-                fixedWidthStrArr.forEach(function (str, index) {
-                    if (dish.count <= 0) {
-                        return;
-                    }
-                    if (index === 0) {
-                        _this.oneLine(str, "x" + dish.count);
-                    }
-                    else {
-                        _this.line(str);
-                    }
-                });
+                var nameArr = dish.name.split('\n');
+                var _loop_2 = function (i) {
+                    var name_2 = nameArr[i];
+                    var fixedWidthStrArr = _this.splitByWidth(name_2, _this.CVS.width - countAndPriceLength);
+                    fixedWidthStrArr.forEach(function (str, index) {
+                        if (dish.count <= 0) {
+                            return;
+                        }
+                        if (i === 0 && index === 0) {
+                            _this.oneLine(str, "x" + dish.count);
+                        }
+                        else {
+                            _this.line(str);
+                        }
+                    });
+                };
+                for (var i = 0; i < nameArr.length; i++) {
+                    _loop_2(i);
+                }
             }
             if (specificationInNewLine) {
                 (_a = dish.specifications) === null || _a === void 0 ? void 0 : _a.forEach(function (str, index) {
                     if (str) {
-                        _this.line('    ※ ' + str + ' ※');
+                        var strArr = str.split('\n');
+                        strArr.forEach(function (specString) {
+                            _this.line('  ※ ' + specString + ' ※  ');
+                        });
                     }
                 });
             }
