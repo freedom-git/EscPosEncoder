@@ -308,6 +308,13 @@ export default class EscPosEncoder {
      */
     raw(data: Array<number>): EscPosEncoder;
     /**
+     * Xinye beep commond
+     *
+     * @returns {EscPosEncoder}          Return the EscPosEncoder, for easy chaining commands
+     *
+     */
+    xinyeBeep(): EscPosEncoder;
+    /**
      * Encode all previous commands
      *
      * @returns {Uint8Array}         Return the encoded bytes
