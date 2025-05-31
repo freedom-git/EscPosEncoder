@@ -993,6 +993,18 @@ export default class EscPosEncoder {
     }
 
     /**
+     * Xinye beep commond
+     *
+     * @returns {EscPosEncoder}          Return the EscPosEncoder, for easy chaining commands
+     *
+     */
+    xinyeBeep(): EscPosEncoder {
+      this._queue([0x1b, 0x43, 0x03, 0x05, 0x03]);
+
+      return this;
+    }
+
+    /**
      * Encode all previous commands
      *
      * @returns {Uint8Array}         Return the encoded bytes
