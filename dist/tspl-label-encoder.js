@@ -101,15 +101,22 @@ var TsplLabelEncoder = /** @class */ (function () {
      *
      * @param  {number}   width  标签宽度 单位mm
      * @param  {number}   height   标签高度 单位mm
+     * @param  {number}   isRotate   是否旋转标签
      * @returns {TsplLabelEncoder}          Return the TsplLabelEncoder, for easy chaining commands
      *
      */
-    TsplLabelEncoder.prototype.init = function (width, height) {
+    TsplLabelEncoder.prototype.init = function (width, height, isRotate) {
+        if (isRotate === void 0) { isRotate = false; }
         this.CVS = document.createElement('canvas');
         this.CVS.width = width * 8;
         this.CVS.height = height * 8;
         this.ctx = this.CVS.getContext('2d');
         this.ctx.textBaseline = 'top';
+        if (isRotate) {
+            this.ctx.translate(this.CVS.width / 2, this.CVS.height / 2);
+            this.ctx.rotate(Math.PI);
+            this.ctx.translate(-this.CVS.width / 2, -this.CVS.height / 2);
+        }
         this.command("\n        SIZE " + width + " mm, " + height + " mm\n        GAP 2 mm\n        CLS\n      ");
         return this;
     };

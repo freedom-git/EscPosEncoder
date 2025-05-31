@@ -58,10 +58,11 @@ export default class TsplLabelEncoder {
      *
      * @param  {number}   width  标签宽度 单位mm
      * @param  {number}   height   标签高度 单位mm
+     * @param  {number}   isRotate   是否旋转标签
      * @returns {TsplLabelEncoder}          Return the TsplLabelEncoder, for easy chaining commands
      *
      */
-    init(width: number, height: number): TsplLabelEncoder;
+    init(width: number, height: number, isRotate?: boolean): TsplLabelEncoder;
     /**
      * Print text
      *
