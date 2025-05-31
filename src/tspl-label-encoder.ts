@@ -109,15 +109,23 @@ export default class TsplLabelEncoder {
      *
      * @param  {number}   width  标签宽度 单位mm
      * @param  {number}   height   标签高度 单位mm
+     * @param  {number}   isRotate   是否旋转标签
      * @returns {TsplLabelEncoder}          Return the TsplLabelEncoder, for easy chaining commands
      *
      */
-    init(width: number, height: number): TsplLabelEncoder {
+    init(width: number, height: number, isRotate: boolean = false): TsplLabelEncoder {
       this.CVS = document.createElement('canvas');
       this.CVS.width = width*8;
       this.CVS.height = height*8;
       this.ctx = this.CVS.getContext('2d');
       this.ctx.textBaseline = 'top';
+      
+      if (isRotate) {
+          this.ctx.translate(this.CVS.width / 2, this.CVS.height / 2); 
+          this.ctx.rotate(Math.PI);
+          this.ctx.translate(-this.CVS.width / 2, -this.CVS.height / 2);
+      }
+
       this.command(`
         SIZE ${width} mm, ${height} mm
         GAP 2 mm
@@ -187,7 +195,6 @@ export default class TsplLabelEncoder {
      *
      */
      image(element:HTMLCanvasElement,width:number,height:number): TsplLabelEncoder {
-
       let image = this.ctx.getImageData(0, 0, width, height);
 
       image = Flatten.flatten(image, [0xff, 0xff, 0xff]);
