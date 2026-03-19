@@ -528,7 +528,7 @@ export default class EscPosImgEncoder extends EscPosEncoder {
         return;
       }
       if(countFront){
-        this.line((dish.count>1?`${dish.count}x    `:'')+dish.name);
+        this.line(`${dish.count}x  ${dish.name}`);
       }else {
         const nameArr = dish.name.split('\n');
         for(let i=0; i<nameArr.length; i++) {

@@ -555,7 +555,7 @@ var EscPosImgEncoder = /** @class */ (function (_super) {
                 return;
             }
             if (countFront) {
-                _this.line((dish.count > 1 ? dish.count + "x    " : '') + dish.name);
+                _this.line(dish.count + "x  " + dish.name);
             }
             else {
                 var nameArr = dish.name.split('\n');
